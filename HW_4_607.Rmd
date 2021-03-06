@@ -1,14 +1,39 @@
 ---
-title: "Untitled"
+title: "DATA 607: Assignment 5"
 author: "Zachary Safir"
-date: "2/25/2021"
-output: html_document
+date: "3/04/2021"
+output:
+  html_document: 
+    toc: true
+    toc_float: true
+    df_print: paged
+  pdf_document: default
+always_allow_html: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,message = F,warning = F)
+knitr::opts_chunk$set(message = F,warning = F)
 ```
 
+## Introduction     
+|   For this assignment we were tasked to work with untidy data. Shown below is a chart that describes arrival delays for two airlines across five destinations. Our first objective is to create a CSV file with this data. Once created, we need to use dplyr and tidyr to tidy and transform the data. Once the data is sufficiently tidied, I will then perform an analysis on the data and describe any findings that I make.
+|
+|
+```{r, echo=F}
+
+knitr::include_graphics("https://i.gyazo.com/a0327a99d0bd5eca7b7dc3ef1cf1626a.png")
+```
+
+
+```{r,echo=F}
+library(tidyverse)
+library(kableExtra)
+library(knitr)
+library(DT)
+```
+
+## Creating the CSV File
+|   Shown below is the process for creating comma separated values, otherwise known as a CSV. Once created, we can use R to write a CSV file for it that we can then upload elsewhere to be read back into R. 
 
 ```{r}
 
@@ -23,6 +48,8 @@ df <- data.frame(X1 = c("Alaska",NA, NA,"AM West",NA),
 ```
  
 
+
+
 ```{r}
 write.csv(df,"flight.csv",row.names=FALSE)
 
@@ -30,35 +57,32 @@ write.csv(df,"flight.csv",row.names=FALSE)
 ```
 
 
-
 ```{r}
 flights <- read.csv("https://raw.githubusercontent.com/zachsfr/RTest/main/flight.csv")
 ```
 
+## Initial Shape of the Data
+|   Seen below is the initial shape of data on load. Unsparingly, it is exactly the same as the original image. With it now loaded into R, we can begin discussing and then fixing the issues with our data
+|
+|   In fixing the data, we need to recognize what is wrong. The original data implicitly labeled the first column, assuming that the reader can figure out that each airline appears twice, once for on time and a second time for delayed. In doing so, they only labeled the on time row with the airline and left the row below empty. In addition, the data uses a blank row to separate each airline.They then decided to split the cities into separate columns. All of these elements combined make the data very hard to use for analysis in R.
+|
+|
+```{r,echo=F}
+datatable(flights)
+```
+## Tidying the Data
+|   While the issues mentioned above prevent us from using the data right away, reshaping the data into a more R friendly format is a very simple process. In the first part of the code below, shown as the highlighted portion in the image below, we can use pivot_longer, the updated version of gather(), to pull the city columns, which were all separate, into one singular column. Once we do so, we can then use the fill() command to  fill in the missing airline names with those in the previous row.
+|
+|   In the next portion of the code, we further tidy the data by splitting the arrival types, "on time" and "delayed", into separate columns using the opposite of pivot_longer, pivot_wider. We then use the new columns to create two new variables that can be useful in analyzing the data, the proportion of delayed and on time arrivals. The final result is shown in the table below.
+|
+|
+```{r, echo=F}
 
-```{r}
-
-
-
-t <- flights %>%
-filter(X2=='on time') %>%
-  select(X1)
-
-
-flights %>% 
-  select(-X1) %>%
-  filter(X2 == "delayed") %>%
-cbind(t) %>%
-  relocate(X1) %>%
-  rbind(flights) %>%
-  filter(!is.na(X1)) %>%
-  pivot_longer(Los.Angeles:Seattle)
-
-
-bind_cols()
+knitr::include_graphics("https://i.gyazo.com/bc011ac17eb329a4d38147ef34c0fe50.png")
 ```
 
-
+|
+|
 ```{r}
 
 
@@ -75,13 +99,24 @@ flights <- flights %>%
          on_time_prop =  round(((On.Time/(Delayed + On.Time))),  3 )
          
          ) 
-
-
   
 ```
 
+|
+|
+```{r,echo=F}
+datatable(flights)
+```
+## Analyzing the Data
 
-
+### Part One
+| In this section, we will analyze the data. With the arrival delay being a numeric value, and the cities that represent them as categorical, we can cleanly visualize and study our data using a barplot with our bars split by airline. The code and resulting barplot can be seen below. 
+|
+|    Using the barplot below can gain some significant insight into some key aspects about our data. The first and most striking detail is that the airline AM West has significantly more arrival delays at every location. 
+|
+|   We can also see which cities have the most and least arrival delays. It appears that San Francisco has the most and that Phoneix has the last arrival delays. 
+|
+|
 ```{r}
 
 
@@ -91,16 +126,18 @@ flights <- flights %>%
   geom_text(aes(label=delay_prop), vjust=1.6, color="white",
             position = position_dodge(0.9), size=3.5) +
 
-  labs(y = ("Departure Delay"),x = ("City"),
-      title = ("Proportion of Depatures with Delays per City and Airline")  ) +
+  labs(y = ("Arrival Delay"),x = ("City"),
+      title = ("Proportion of Arrivals with Delays per City and Airline")  ) +
   scale_x_discrete(labels = c("Phoenix","San Diego","Los Angeles","Seattle","San Francisco"))+
   scale_fill_brewer(palette="Paired") +
   theme_minimal()
 
 ```
 
-  
-  
+### Part Two
+|   When looking at the data from a different angle, we notice something bizarre occurring. In the barplot below, the per airline delayed flight arrival proportions are compared. We noted above that AM West had significantly more arrival delays when looking at arrival delays per city. However, now when we look at the overall arrival delay values for both airline, Alaska appears to have the highest delay value. What is going on?
+|
+|
 ```{r}
 
 flights %>%
@@ -110,16 +147,28 @@ flights %>%
   ggplot(aes(x=Airline, y=m ,fill=Airline)) + 
   geom_bar(stat = 'identity') +
   geom_text(aes(label=m ), vjust=1.6, color="white",
-            position = position_dodge(0.9), size=3.5)+
+            position = position_dodge(0.9), size=3.5) +
+  labs(y = ("Arrival Delay"),
+      title = ("Proportion of Arrivals with Delays per Airline")) +
   scale_fill_brewer(palette="Paired")+
   theme_minimal()
  
 
 ```
-  
-  
-  
- 
+
+| 
+|   However, the mystery for why this is occurring is solved by looking back at our data. As seen below, in Phoenix, AM West airlines has a total number of flights that is significantly higher than the rest of the data. The overall number of on time and delayed flights in this city far outnumber the other values. When we go to sum the arrival counts for each airline, that massive number skews the final value we get for AM West.
+
+```{r,echo=F}
+flights %>% select(!delay_prop:on_time_prop) %>% 
+  kable(style="html",booktabs = T) %>%   
+  kable_styling() %>%
+  row_spec(which(flights$On.Time==4840), bold = T, color = "white", background = "blue")
+```
+|
+|   As shown in the updated barplot below, if we ignore Phoenix in our data, our expected outcome of AM West having the highest overall arrival delay proportion, comes true. 
+|
+|
 ```{r}
 
 
@@ -131,13 +180,18 @@ group_by(Airline) %>%
   geom_bar(stat = 'identity') +
   geom_text(aes(label=m ), vjust=1.6, color="white",
             position = position_dodge(0.9), size=3.5)+
+  labs(y = ("Arrival Delay"),
+      title = ("Proportion of Arrivals with Delays per Airline, Excluding Phoenix")) +
   scale_fill_brewer(palette="Paired")+
   theme_minimal()
  
 
 ```
-  
 
+## Conclusion
+|   This assignment had us work with oddly shaped data that won't work well with R if left alone. However, as shown here, using dpylr and tidyr makes the process for tidying the data into proper format a simple and efficient matter. 
+|
+|   Once we have the data reformatted, we can use ggplot to analyze and better make sense of what is happening in our data. However, as shown in this assignment, we must always be cautions about relying on the initial graphics we make. Extreme values in our data can easily skew the outcome we see and lead to false conclusions. Proper understanding of how the values in our data affect the outcome is essential.
 
 
 
