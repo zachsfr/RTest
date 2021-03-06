@@ -64,7 +64,7 @@ flights <- read.csv("https://raw.githubusercontent.com/zachsfr/RTest/main/flight
 ## Initial Shape of the Data
 |   Seen below is the initial shape of data on load. Unsparingly, it is exactly the same as the original image. With it now loaded into R, we can begin discussing and then fixing the issues with our data
 |
-|   In fixing the data, we need to recognize what is wrong. The original data implicitly labeled the first column, assuming that the reader can figure out that each airline appears twice, once for on time and a second time for delayed. In doing so, they only labeled the on time row with the airline and left the row below empty. In addition, the data uses a blank row to separate each airline.They then decided to split the cities into separate columns. All of these elements combined make the data very hard to use for analysis in R.
+|   In fixing the data, we need to first recognize what is wrong with it. The original data implicitly labeled the first column, assuming that the reader can figure out that each airline appears twice, once for on time and a second time for delayed. In doing so, they only labeled the on time row with the airline and left the row below empty. In addition, the data uses a blank row to separate each airline.They then decided to split the cities into separate columns. All of these elements combined make the data very hard to use for analysis in R.
 |
 |
 ```{r,echo=F}
